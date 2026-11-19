@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="あと何kcal">
+<meta name="theme-color" content="#FFF8F3">
+<title>あと何キロカロリー</title>
+<style>
+  :root{
+    --bg:#FFF8F3; --card:#FFFFFF; --ink:#1A1A1F; --sub:#8A8790; --line:#F3E9E2;
+    --o1:#FFC371; --o2:#FF8A3D; --o3:#F2512A;
+    --grad:linear-gradient(135deg,var(--o1) 0%,var(--o2) 50%,var(--o3) 100%);
+    --soft:linear-gradient(135deg,#FFF1E4,#FFE2D2);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg)}
+  body{font-family:-apple-system,"SF Pro Display","Hiragino Sans","Noto Sans JP",sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;min-height:100dvh}
+  body::before{content:"";position:fixed;top:-140px;right:-100px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(255,138,61,.22),transparent 70%);pointer-events:none;z-index:0}
+  .screen{display:none;position:relative;z-index:1;max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;
+    padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 18px);flex-direction:column;gap:12px}
+  .screen.on{display:flex}
+  .top{display:flex;justify-content:space-between;align-items:center}
+  .date{font-size:12px;color:var(--sub);font-weight:600;letter-spacing:.04em}
+  .icon-btn{background:none;border:none;font-size:20px;color:var(--sub);padding:4px 6px;cursor:pointer}
+  .card{background:var(--card);border-radius:24px;padding:16px;box-shadow:0 6px 20px rgba(242,81,42,.06)}
+  /* ホーム：リング */
+  .ringbox{display:flex;flex-direction:column;align-items:center;padding:18px 16px;background:var(--grad);color:#fff;box-shadow:0 14px 30px rgba(242,81,42,.35)}
+  .ring{width:170px;height:170px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  .ring-in{width:144px;height:144px;border-radius:50%;background:var(--grad);display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring-in small{font-size:12px;opacity:.9}
+  .ring-in b{font-size:40px;line-height:1.1;font-weight:800;letter-spacing:-.02em}
+  .ring-in i{font-style:normal;font-size:12px;opacity:.9}
+  .ringnote{font-size:12px;margin-top:10px;opacity:.92}
+  .ringnote b{font-weight:700}
+  /* 栄養バー */
+  .ttl{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between}
+  .ttl em{font-style:normal;font-weight:400;color:var(--sub);font-size:11px}
+  .bar{margin-bottom:9px}
+  .bar-top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+  .tag{font-size:10px;padding:1px 7px;border-radius:8px;background:var(--o3);color:#fff;font-weight:700;margin-left:4px}
+  .track{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+  .fill{height:100%;border-radius:4px;background:var(--grad);transition:width .4s}
+  .fill.low{background:linear-gradient(90deg,#FFD9C2,#FFB08A)}
+  .hint{font-size:11px;color:var(--sub)}
+  /* 今日の記録 */
+  .meal{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+  .meal:first-of-type{border-top:none}
+  .meal img{width:44px;height:44px;border-radius:12px;object-fit:cover;background:var(--line)}
+  .meal .m-name{flex:1;font-size:13px}
+  .meal .m-name small{display:block;color:var(--sub);font-size:11px}
+  .meal .m-kcal{font-weight:700;font-size:14px}
+  .meal .del{background:none;border:none;color:var(--sub);font-size:16px;padding:4px 6px;cursor:pointer}
+  /* 撮影ボタン */
+  .actions{display:flex;gap:10px;margin-top:auto;position:sticky;bottom:calc(env(safe-area-inset-bottom) + 10px)}
+  .btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--grad);color:#fff;text-align:center;padding:16px;border-radius:18px;font-weight:700;font-size:15px;letter-spacing:.04em;box-shadow:0 12px 24px rgba(242,81,42,.35);border:none;cursor:pointer;font-family:inherit}
+  .btn.ghost{background:#fff;color:var(--o3);box-shadow:0 6px 18px rgba(242,81,42,.12)}
+  .btn:disabled{opacity:.5}
+  .btn svg{width:20px;height:20px}
+  .link{text-align:center;font-size:13px;color:var(--sub);background:none;border:none;padding:8px;cursor:pointer;font-family:inherit}
+  /* 結果画面 */
+  .photo{width:100%;aspect-ratio:4/3;border-radius:24px;object-fit:cover;background:var(--line);box-shadow:0 10px 24px rgba(0,0,0,.08)}
+  .ai{font-size:11px;color:var(--sub);display:flex;align-items:center;gap:6px}
+  .ai::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--grad)}
+  .food{font-size:15px;font-weight:700;margin-bottom:4px}
+  .big{font-size:13px;color:var(--sub)}
+  .big b{font-size:40px;font-weight:800;letter-spacing:-.02em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{font-size:12px;background:var(--soft);padding:6px 10px;border-radius:12px;color:#B5421F;font-weight:600}
+  .loading{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 0;color:var(--sub);font-size:13px}
+  .spin{width:36px;height:36px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--o2);animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .err{color:var(--o3);font-size:13px;line-height:1.6}
+  /* 設定画面 */
+  .h2{font-size:22px;font-weight:800;margin-top:12px;line-height:1.4}
+  .p{font-size:12px;color:var(--sub);line-height:1.6}
+  label.f{display:block;font-size:13px;font-weight:700;margin:6px 0 6px}
+  label.f small{font-weight:400;color:var(--sub)}
+  .in{width:100%;background:#fff;border:none;border-radius:16px;padding:14px 16px;font-size:17px;font-family:inherit;box-shadow:0 0 0 1.5px var(--line);outline:none}
+  .in:focus{box-shadow:0 0 0 2px var(--o2)}
+  .in.kcal{font-size:32px;font-weight:800;text-align:center}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid label.f{font-weight:600;font-size:12px}
+  .grid .in{font-size:15px;padding:12px 14px}
+  details{font-size:13px}
+  details summary{cursor:pointer;color:var(--o3);font-weight:600;padding:4px 0}
+</style>
+</head>
+<body>
+
+<!-- ① 設定 -->
+<section class="screen" id="s-setup">
+  <div class="h2">はじめに設定します</div>
+  <div class="p">ここで入れた内容は、このiPhoneの中にだけ保存されます。</div>
+
+  <div class="card">
+    <label class="f" for="in-kcal">1日の目安カロリー <small>（自分で決めた数字）</small></label>
+    <input class="in kcal" id="in-kcal" type="number" inputmode="numeric" placeholder="0000">
+  </div>
+
+  <div class="card">
+    <label class="f" for="in-key">AIのキー（APIキー）</label>
+    <input class="in" id="in-key" type="password" autocomplete="off" placeholder="sk-ant-...">
+    <p class="p" style="margin-top:8px">写真からカロリーを推測するのに使います。</p>
+  </div>
+
+  <div class="card">
+    <details id="nut-details">
+      <summary>栄養の目安量も入れる（入れなくてもOK）</summary>
+      <p class="p" style="margin:8px 0">入れると、目安に対して何％とれているかをグラフで表示します。空欄の栄養は、とった量だけ表示します。</p>
+      <div class="grid">
+        <div><label class="f" for="t-protein">たんぱく質 (g)</label><input class="in" id="t-protein" type="number" inputmode="decimal"></div>
+        <div><label class="f" for="t-fat">脂質 (g)</label><input class="in" id="t-fat" type="number" inputmode="decimal"></div>
+        <div><label class="f" for="t-carbs">炭水化物 (g)</label><input class="in" id="t-carbs" type="number" inputmode="decimal"></div>
+        <div><label class="f" for="t-iron">鉄分 (mg)</label><input class="in" id="t-iron" type="number" inputmode="decimal"></div>
+      </div>
+    </details>
+  </div>
+
+  <p class="err" id="setup-err"></p>
+  <div class="actions"><button class="btn" id="btn-save">保存してはじめる</button></div>
+  <button class="link" id="btn-setup-back" style="display:none">戻る</button>
+</section>
+
+<!-- ② ホーム -->
+<section class="screen" id="s-home">
+  <div class="top">
+    <div class="date" id="today-label"></div>
+    <button class="icon-btn" id="btn-settings" aria-label="設定">⚙︎</button>
+  </div>
+
+  <div class="card ringbox">
+    <div class="ring" id="ring"><div class="ring-in">
+      <small id="ring-label">今日あと</small>
+      <b id="ring-num">0</b>
+      <i id="ring-unit">kcal までOK</i>
+    </div></div>
+    <div class="ringnote">とった量 <b id="eaten">0</b> ／ 目安 <b id="target">0</b> kcal</div>
+  </div>
+
+  <div class="card">
+    <div class="ttl">今日の栄養 <em id="nut-note">目安に対して</em></div>
+    <div id="bars"></div>
+  </div>
+
+  <div class="card">
+    <div class="ttl">今日の記録 <em id="meal-count"></em></div>
+    <div id="meals"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="btn-camera">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>撮影
+    </button>
+    <button class="btn ghost" id="btn-library">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg>カメラロール
+    </button>
+  </div>
+  <input type="file" id="file-camera" accept="image/*" capture="environment" hidden>
+  <input type="file" id="file-library" accept="image/*" hidden>
+</section>
+
+<!-- ③ 結果 -->
+<section class="screen" id="s-result">
+  <img class="photo" id="r-photo" alt="選んだ食事の写真">
+  <div id="r-loading" class="card loading"><div class="spin"></div>AIが写真を見ています…</div>
+  <div id="r-body" style="display:none;flex-direction:column;gap:12px">
+    <div class="ai">AIが推定しました（大体の目安）</div>
+    <div class="card">
+      <div class="food" id="r-food"></div>
+      <div class="big"><b id="r-kcal">0</b> kcal</div>
+      <div class="chips" id="r-chips"></div>
+    </div>
+  </div>
+  <p class="err" id="r-err"></p>
+  <div class="actions"><button class="btn" id="btn-record" disabled>記録する</button></div>
+  <button class="link" id="btn-cancel">やめる</button>
+</section>
+
+<script type="module">
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk";
+
+/* ---------- 保存まわり（このiPhoneの中だけ） ---------- */
+const KEY_SETTINGS = "atonan.settings";
+const KEY_MEALS = "atonan.meals";
+const NUTS = [
+  { id: "protein", label: "たんぱく質", unit: "g" },
+  { id: "fat",     label: "脂質",       unit: "g" },
+  { id: "carbs",   label: "炭水化物",   unit: "g" },
+  { id: "iron",    label: "鉄分",       unit: "mg" },
+];
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const $ = (id) => document.getElementById(id);
+const round = (n, k = 0) => { const p = 10 ** k; return Math.round((Number(n) || 0) * p) / p; };
+
+/* ---------- 画面切り替え ---------- */
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id));
+  window.scrollTo(0, 0);
+}
+
+/* ---------- ① 設定 ---------- */
+function openSetup() {
+  const s = load(KEY_SETTINGS, null);
+  $("in-kcal").value = s?.targetKcal ?? "";
+  $("in-key").value = s?.apiKey ?? "";
+  NUTS.forEach(n => $("t-" + n.id).value = s?.targets?.[n.id] ?? "");
+  if (s && NUTS.some(n => s.targets?.[n.id])) $("nut-details").open = true;
+  $("btn-setup-back").style.display = s ? "block" : "none";
+  $("setup-err").textContent = "";
+  show("s-setup");
+}
+$("btn-save").onclick = () => {
+  const kcal = Number($("in-kcal").value);
+  const key = $("in-key").value.trim();
+  if (!kcal || kcal <= 0) return $("setup-err").textContent = "1日の目安カロリーを入れてください。";
+  if (!key) return $("setup-err").textContent = "AIのキーを入れてください。";
+  const targets = {};
+  NUTS.forEach(n => { const v = Number($("t-" + n.id).value); if (v > 0) targets[n.id] = v; });
+  save(KEY_SETTINGS, { targetKcal: kcal, apiKey: key, targets });
+  renderHome(); show("s-home");
+};
+$("btn-setup-back").onclick = () => { renderHome(); show("s-home"); };
+
+/* ---------- ② ホーム ---------- */
+function todaysMeals() { return load(KEY_MEALS, {})[dayKey()] ?? []; }
+
+function renderHome() {
+  const s = load(KEY_SETTINGS, null);
+  const meals = todaysMeals();
+  const d = new Date();
+  $("today-label").textContent = `今日　${d.getMonth()+1}月${d.getDate()}日（${"日月火水木金土"[d.getDay()]}）`;
+
+  const eaten = meals.reduce((a, m) => a + (m.kcal || 0), 0);
+  const left = s.targetKcal - eaten;
+  $("eaten").textContent = round(eaten).toLocaleString();
+  $("target").textContent = round(s.targetKcal).toLocaleString();
+  if (left >= 0) {
+    $("ring-label").textContent = "今日あと"; $("ring-num").textContent = round(left).toLocaleString(); $("ring-unit").textContent = "kcal までOK";
+  } else {
+    $("ring-label").textContent = "目安より"; $("ring-num").textContent = "+" + round(-left).toLocaleString(); $("ring-unit").textContent = "kcal オーバー";
+  }
+  const pct = Math.min(100, Math.max(0, eaten / s.targetKcal * 100));
+  $("ring").style.background = `conic-gradient(#fff 0 ${pct}%, rgba(255,255,255,.28) ${pct}% 100%)`;
+
+  // 栄養バー
+  const hasTargets = NUTS.some(n => s.targets?.[n.id]);
+  $("nut-note").textContent = hasTargets ? "目安に対して" : "目安は設定で入れられます";
+  $("bars").innerHTML = NUTS.map(n => {
+    const v = meals.reduce((a, m) => a + (m[n.id] || 0), 0);
+    const t = s.targets?.[n.id];
+    const amount = `${round(v, n.unit === "mg" ? 1 : 0)}${n.unit}`;
+    if (!t) {
+      return `<div class="bar"><div class="bar-top"><span>${n.label}</span><span>${amount}</span></div></div>`;
+    }
+    const p = Math.round(v / t * 100);
+    const low = meals.length > 0 && p < 50;
+    return `<div class="bar"><div class="bar-top"><span>${n.label}${low ? '<span class="tag">少なめ</span>' : ""}</span><span>${amount}（${p}%）</span></div>
+      <div class="track"><div class="fill${low ? " low" : ""}" style="width:${Math.min(100, p)}%"></div></div></div>`;
+  }).join("");
+
+  // 今日の記録
+  $("meal-count").textContent = meals.length ? `${meals.length}件` : "";
+  $("meals").innerHTML = meals.length ? meals.map((m, i) => `
+    <div class="meal">
+      ${m.thumb ? `<img src="${m.thumb}" alt="">` : `<img alt="">`}
+      <div class="m-name">${escapeHtml(m.food || "食事")}<small>${m.time}</small></div>
+      <div class="m-kcal">${round(m.kcal)} kcal</div>
+      <button class="del" data-i="${i}" aria-label="削除">×</button>
+    </div>`).join("") : `<p class="hint">まだ記録がありません。下のボタンから写真を選んでください。</p>`;
+  document.querySelectorAll(".meal .del").forEach(b => b.onclick = () => {
+    if (!confirm("この記録を消しますか？")) return;
+    const all = load(KEY_MEALS, {});
+    all[dayKey()].splice(Number(b.dataset.i), 1);
+    save(KEY_MEALS, all); renderHome();
+  });
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+
+$("btn-settings").onclick = openSetup;
+$("btn-camera").onclick = () => $("file-camera").click();
+$("btn-library").onclick = () => $("file-library").click();
+$("file-camera").onchange = (e) => handleFile(e.target);
+$("file-library").onchange = (e) => handleFile(e.target);
+
+/* ---------- 写真を小さくする（料金と時間の節約） ---------- */
+function shrink(file, maxSide, quality) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("画像を読み込めませんでした")); };
+    img.src = url;
+  });
+}
+
+/* ---------- ③ AIに聞く ---------- */
+let pending = null;
+
+async function handleFile(input) {
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file) return;
+  pending = null;
+  $("r-err").textContent = "";
+  $("r-body").style.display = "none";
+  $("r-loading").style.display = "flex";
+  $("btn-record").disabled = true;
+  show("s-result");
+  try {
+    const big = await shrink(file, 1568, 0.85);
+    const thumb = await shrink(file, 160, 0.7);
+    $("r-photo").src = big;
+    const result = await estimate(big.split(",")[1]);
+    pending = { ...result, thumb };
+    $("r-food").textContent = result.food;
+    $("r-kcal").textContent = round(result.kcal);
+    $("r-chips").innerHTML = NUTS.map(n => `<span class="chip">${n.label} ${round(result[n.id], n.unit === "mg" ? 1 : 0)}${n.unit}</span>`).join("");
+    $("r-loading").style.display = "none";
+    $("r-body").style.display = "flex";
+    $("btn-record").disabled = false;
+  } catch (err) {
+    $("r-loading").style.display = "none";
+    $("r-err").textContent = friendlyError(err);
+  }
+}
+
+const SCHEMA = {
+  type: "object",
+  properties: {
+    food:    { type: "string", description: "料理名（日本語・短く）" },
+    kcal:    { type: "number" },
+    protein: { type: "number", description: "たんぱく質 g" },
+    fat:     { type: "number", description: "脂質 g" },
+    carbs:   { type: "number", description: "炭水化物 g" },
+    iron:    { type: "number", description: "鉄分 mg" },
+  },
+  required: ["food", "kcal", "protein", "fat", "carbs", "iron"],
+  additionalProperties: false,
+};
+
+async function estimate(base64) {
+  const s = load(KEY_SETTINGS, null);
+  // 自分のiPhoneで、自分のキーだけを使う個人用アプリなので、ブラウザから直接AIを呼びます
+  const client = new Anthropic({ apiKey: s.apiKey, dangerouslyAllowBrowser: true });
+  const response = await client.beta.messages.create({
+    model: "claude-opus-5-5",
+    max_tokens: 16000,
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
+    system: "あなたは管理栄養士です。写真に写っている食事（1人分として見える量すべて）の栄養を推定します。" +
+            "パッケージの栄養成分表示が読めるときは、その数字を優先してください。" +
+            "食べ物が写っていないときは food を「食べ物が見つかりません」、数値をすべて 0 にしてください。",
+    messages: [{
+      role: "user",
+      content: [
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
+        { type: "text", text: "この食事のカロリーと、たんぱく質・脂質・炭水化物・鉄分を推定してください。" },
+      ],
+    }],
+  });
+  if (response.stop_reason === "refusal") throw new Error("REFUSAL");
+  const text = response.content.find(b => b.type === "text")?.text;
+  if (!text) throw new Error("EMPTY");
+  return JSON.parse(text);
+}
+
+function friendlyError(err) {
+  if (err instanceof Anthropic.AuthenticationError) return "AIのキーが正しくないようです。右上の⚙︎から入れ直してください。";
+  if (err instanceof Anthropic.PermissionDeniedError) return "このキーでは使えないようです。チャージ残高やキーの設定を確認してください。";
+  if (err instanceof Anthropic.RateLimitError) return "短い時間に使いすぎたようです。少し待ってからもう一度試してください。";
+  if (err instanceof Anthropic.APIConnectionError) return "インターネットにつながっていないようです。電波を確認してください。";
+  if (err instanceof Anthropic.APIError) {
+    if (err.status === 400 && /credit|balance/i.test(err.message)) return "チャージ残高が足りないようです。";
+    return `AIの読み取りに失敗しました。もう一度試してください。（エラー番号 ${err.status ?? "-"}）`;
+  }
+  if (err?.message === "REFUSAL") return "この写真はAIが読み取れませんでした。別の写真で試してください。";
+  return "うまく読み取れませんでした。もう一度試してください。";
+}
+
+$("btn-record").onclick = () => {
+  if (!pending) return;
+  const all = load(KEY_MEALS, {});
+  const k = dayKey();
+  const d = new Date();
+  (all[k] ??= []).push({ ...pending, time: `${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}` });
+  try { save(KEY_MEALS, all); }
+  catch { $("r-err").textContent = "保存する場所がいっぱいです。古い記録を消してください。"; return; }
+  pending = null;
+  renderHome(); show("s-home");
+};
+$("btn-cancel").onclick = () => { pending = null; renderHome(); show("s-home"); };
+
+/* ---------- 起動 ---------- */
+if (load(KEY_SETTINGS, null)) { renderHome(); show("s-home"); } else { openSetup(); }
+</script>
+</body>
+</html>
