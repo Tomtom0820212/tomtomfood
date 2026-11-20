@@ -60,6 +60,43 @@
   .btn.ghost{background:#fff;color:var(--o3);box-shadow:0 6px 18px rgba(242,81,42,.12)}
   .btn:disabled{opacity:.5}
   .btn svg{width:20px;height:20px}
+  /* 振り返り */
+  .top-right{display:flex;align-items:center;gap:4px}
+  .pill{display:flex;align-items:center;gap:5px;background:#fff;border:none;border-radius:20px;padding:7px 12px;font-size:12px;font-weight:700;color:var(--o3);box-shadow:0 4px 12px rgba(242,81,42,.12);cursor:pointer;font-family:inherit}
+  .pill svg{width:14px;height:14px}
+  .back{background:none;border:none;color:var(--o3);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;width:52px;text-align:left}
+  .h3{font-size:16px;font-weight:800}
+  .weeknav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .nav{width:36px;height:36px;border-radius:50%;border:none;background:var(--bg);color:var(--o3);font-size:22px;line-height:1;cursor:pointer}
+  .nav:disabled{opacity:.3}
+  .wk-label{font-size:14px;font-weight:700}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .stats div{background:var(--bg);border-radius:14px;padding:10px 8px;text-align:center}
+  .stats small{display:block;font-size:10px;color:var(--sub)}
+  .stats b{font-size:20px;font-weight:800}
+  .stats i{font-style:normal;font-size:10px;color:var(--sub);margin-left:2px}
+  .chart{position:relative}
+  .chart svg{display:block;width:100%;height:auto;overflow:visible}
+  .chart .bar-hit{cursor:pointer}
+  .tip{position:absolute;transform:translate(-50%,-100%);background:var(--ink);color:#fff;font-size:11px;padding:6px 9px;border-radius:10px;white-space:nowrap;pointer-events:none;margin-top:-8px}
+  .tip b{font-size:13px}
+  .legend{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--sub);margin-top:8px}
+  .lg-bar{width:10px;height:10px;border-radius:3px;background:var(--grad)}
+  .lg-line{width:16px;border-top:2px dashed var(--ink);margin-left:10px;opacity:.5}
+  .day{border-top:1px solid var(--line)}
+  .day:first-child{border-top:none}
+  .day-head{display:flex;align-items:center;gap:10px;padding:11px 0;cursor:pointer}
+  .day-head .d{flex:1;font-size:13px;font-weight:600}
+  .day-head .d small{display:block;font-weight:400;color:var(--sub);font-size:11px}
+  .day-head .k{font-size:14px;font-weight:800}
+  .day-head .k.none{color:var(--sub);font-weight:400;font-size:12px}
+  .over{font-size:10px;padding:1px 7px;border-radius:8px;background:var(--ink);color:#fff;font-weight:700;margin-left:4px}
+  .day-head .arrow{color:var(--sub);transition:transform .2s}
+  .day.open .arrow{transform:rotate(90deg)}
+  .day-body{display:none;padding:0 0 12px}
+  .day.open .day-body{display:block}
+  .day-body .chips{margin:0 0 6px}
+  .day-body .meal{padding:6px 0}
   .link{text-align:center;font-size:13px;color:var(--sub);background:none;border:none;padding:8px;cursor:pointer;font-family:inherit}
   /* 結果画面 */
   .photo{width:100%;aspect-ratio:4/3;border-radius:24px;object-fit:cover;background:var(--line);box-shadow:0 10px 24px rgba(0,0,0,.08)}
@@ -129,7 +166,12 @@
 <section class="screen" id="s-home">
   <div class="top">
     <div class="date" id="today-label"></div>
-    <button class="icon-btn" id="btn-settings" aria-label="設定">⚙︎</button>
+    <div class="top-right">
+      <button class="pill" id="btn-history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20V12M12 20V5M19 20v-9"/></svg>振り返り
+      </button>
+      <button class="icon-btn" id="btn-settings" aria-label="設定">⚙︎</button>
+    </div>
   </div>
 
   <div class="card ringbox">
@@ -161,6 +203,35 @@
   </div>
   <input type="file" id="file-camera" accept="image/*" capture="environment" hidden>
   <input type="file" id="file-library" accept="image/*" hidden>
+</section>
+
+<!-- ④ 振り返り -->
+<section class="screen" id="s-history">
+  <div class="top">
+    <button class="back" id="btn-history-back">‹ 今日</button>
+    <div class="h3">振り返り</div>
+    <span style="width:52px"></span>
+  </div>
+
+  <div class="card">
+    <div class="weeknav">
+      <button class="nav" id="wk-prev" aria-label="前の週">‹</button>
+      <div class="wk-label" id="wk-label"></div>
+      <button class="nav" id="wk-next" aria-label="次の週">›</button>
+    </div>
+    <div class="stats">
+      <div><small>1日の平均</small><b id="wk-avg">0</b><i>kcal</i></div>
+      <div><small>記録した日</small><b id="wk-days">0</b><i>日</i></div>
+      <div><small>目安オーバー</small><b id="wk-over">0</b><i>日</i></div>
+    </div>
+    <div class="chart" id="chart"></div>
+    <div class="legend"><span class="lg-bar"></span>とったカロリー<span class="lg-line"></span>目安</div>
+  </div>
+
+  <div class="card">
+    <div class="ttl">日ごとの記録 <em>タップで中身を表示</em></div>
+    <div id="days"></div>
+  </div>
 </section>
 
 <!-- ③ 結果 -->
@@ -403,6 +474,124 @@ $("btn-record").onclick = () => {
   renderHome(); show("s-home");
 };
 $("btn-cancel").onclick = () => { pending = null; renderHome(); show("s-home"); };
+
+/* ---------- ④ 振り返り ---------- */
+const WD = "日月火水木金土";
+let weekEnd = new Date(); // 表示している週の最後の日（初期値は今日）
+
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const md = (d) => `${d.getMonth()+1}/${d.getDate()}`;
+const sum = (meals, key) => meals.reduce((a, m) => a + (m[key] || 0), 0);
+
+function openHistory() { weekEnd = new Date(); renderHistory(); show("s-history"); }
+
+function renderHistory() {
+  const s = load(KEY_SETTINGS, null);
+  const all = load(KEY_MEALS, {});
+  const target = s.targetKcal;
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = addDays(weekEnd, -i);
+    const meals = all[dayKey(d)] ?? [];
+    days.push({ d, meals, kcal: sum(meals, "kcal") });
+  }
+  const recorded = days.filter(x => x.meals.length);
+  $("wk-label").textContent = `${md(days[0].d)}（${WD[days[0].d.getDay()]}）〜 ${md(days[6].d)}（${WD[days[6].d.getDay()]}）`;
+  $("wk-avg").textContent = recorded.length ? round(recorded.reduce((a, x) => a + x.kcal, 0) / recorded.length).toLocaleString() : "-";
+  $("wk-days").textContent = recorded.length;
+  $("wk-over").textContent = recorded.filter(x => x.kcal > target).length;
+  $("wk-next").disabled = dayKey(weekEnd) >= dayKey(new Date());
+
+  drawChart(days, target);
+
+  // 日ごとのリスト（新しい日が上）
+  $("days").innerHTML = [...days].reverse().map((x, i) => {
+    const has = x.meals.length > 0;
+    const over = has && x.kcal > target;
+    const nutr = NUTS.map(n => `<span class="chip">${n.label} ${round(sum(x.meals, n.id), n.unit === "mg" ? 1 : 0)}${n.unit}</span>`).join("");
+    const meals = x.meals.map(m => `
+      <div class="meal">${m.thumb ? `<img src="${m.thumb}" alt="">` : `<img alt="">`}
+        <div class="m-name">${escapeHtml(m.food || "食事")}<small>${m.time}</small></div>
+        <div class="m-kcal">${round(m.kcal)} kcal</div></div>`).join("");
+    return `<div class="day" data-key="${dayKey(x.d)}">
+      <div class="day-head">
+        <div class="d">${md(x.d)}（${WD[x.d.getDay()]}）${over ? '<span class="over">目安オーバー</span>' : ""}<small>${has ? `${x.meals.length}件の記録` : "記録なし"}</small></div>
+        <div class="k${has ? "" : " none"}">${has ? round(x.kcal).toLocaleString() + " kcal" : "—"}</div>
+        <span class="arrow">${has ? "›" : ""}</span>
+      </div>
+      ${has ? `<div class="day-body"><div class="chips">${nutr}</div>${meals}</div>` : ""}
+    </div>`;
+  }).join("");
+  document.querySelectorAll(".day").forEach(el => {
+    if (!el.querySelector(".day-body")) return;
+    el.querySelector(".day-head").onclick = () => el.classList.toggle("open");
+  });
+}
+
+function drawChart(days, target) {
+  const W = 320, H = 190, padL = 34, padR = 6, padT = 14, padB = 34;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const maxVal = Math.max(target * 1.2, ...days.map(x => x.kcal * 1.1), 100);
+  const step = maxVal > 3000 ? 1000 : 500;
+  const top = Math.ceil(maxVal / step) * step;
+  const y = v => padT + plotH - (v / top) * plotH;
+  const colW = plotW / 7, barW = Math.min(26, colW - 10);
+  const todayKey = dayKey(new Date());
+
+  let g = "";
+  // 目盛り線（うすく）
+  for (let v = 0; v <= top; v += step) {
+    g += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="#F3E9E2" stroke-width="1"/>`;
+    g += `<text x="${padL - 6}" y="${y(v) + 3}" text-anchor="end" font-size="9" fill="#8A8790">${v.toLocaleString()}</text>`;
+  }
+  // 棒（上だけ角丸）
+  days.forEach((x, i) => {
+    const cx = padL + colW * i + colW / 2;
+    const isToday = dayKey(x.d) === todayKey;
+    if (x.kcal > 0) {
+      const h = Math.max(4, plotH - (y(x.kcal) - padT));
+      const bx = cx - barW / 2, by = padT + plotH - h, r = Math.min(4, h);
+      g += `<path d="M${bx},${by + h} V${by + r} Q${bx},${by} ${bx + r},${by} H${bx + barW - r} Q${bx + barW},${by} ${bx + barW},${by + r} V${by + h} Z" fill="url(#barGrad)"/>`;
+    }
+    g += `<text x="${cx}" y="${H - padB + 14}" text-anchor="middle" font-size="10" font-weight="${isToday ? 800 : 500}" fill="${isToday ? "#1A1A1F" : "#8A8790"}">${WD[x.d.getDay()]}</text>`;
+    g += `<text x="${cx}" y="${H - padB + 26}" text-anchor="middle" font-size="9" fill="#8A8790">${isToday ? "今日" : md(x.d)}</text>`;
+    g += `<rect class="bar-hit" data-i="${i}" x="${padL + colW * i}" y="${padT}" width="${colW}" height="${plotH}" fill="transparent"/>`;
+  });
+  // 目安の線
+  g += `<line x1="${padL}" x2="${W - padR}" y1="${y(target)}" y2="${y(target)}" stroke="#1A1A1F" stroke-opacity=".5" stroke-width="1.5" stroke-dasharray="4 3" pointer-events="none"/>`;
+  g += `<text x="${W - padR}" y="${y(target) - 4}" text-anchor="end" font-size="9" fill="#1A1A1F" fill-opacity=".7" pointer-events="none">目安 ${target.toLocaleString()}</text>`;
+
+  $("chart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="1週間の摂取カロリーの棒グラフ">
+    <defs><linearGradient id="barGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FFC371"/><stop offset=".55" stop-color="#FF8A3D"/><stop offset="1" stop-color="#F2512A"/></linearGradient></defs>
+    ${g}</svg><div class="tip" id="tip" style="display:none"></div>`;
+
+  // タップ（マウスなら乗せる）で数字を表示
+  const svg = $("chart").querySelector("svg"), tip = $("tip");
+  const showTip = (i) => {
+    const x = days[i];
+    const rect = svg.getBoundingClientRect(), sx = rect.width / W;
+    const cx = (padL + colW * i + colW / 2) * sx;
+    const ty = (x.kcal > 0 ? y(x.kcal) : y(0)) * sx;
+    tip.innerHTML = `${md(x.d)}（${WD[x.d.getDay()]}）　<b>${x.meals.length ? round(x.kcal).toLocaleString() + " kcal" : "記録なし"}</b>`;
+    tip.style.left = Math.min(Math.max(cx, 60), rect.width - 60) + "px";
+    tip.style.top = ty + "px";
+    tip.style.display = "block";
+  };
+  svg.querySelectorAll(".bar-hit").forEach(r => {
+    r.addEventListener("click", () => showTip(Number(r.dataset.i)));
+    r.addEventListener("mouseenter", () => showTip(Number(r.dataset.i)));
+  });
+  svg.addEventListener("mouseleave", () => tip.style.display = "none");
+}
+
+$("btn-history").onclick = openHistory;
+$("btn-history-back").onclick = () => { renderHome(); show("s-home"); };
+$("wk-prev").onclick = () => { weekEnd = addDays(weekEnd, -7); renderHistory(); };
+$("wk-next").onclick = () => {
+  const next = addDays(weekEnd, 7);
+  weekEnd = dayKey(next) > dayKey(new Date()) ? new Date() : next;
+  renderHistory();
+};
 
 /* ---------- 起動 ---------- */
 if (load(KEY_SETTINGS, null)) { renderHome(); show("s-home"); } else { openSetup(); }
